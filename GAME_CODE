@@ -1,5 +1,62 @@
 import pygame
 import random
+import re
+
+def can_make_24(nums):
+    if len(nums) == 1:
+        return abs(nums[0] - 24) < 0.001
+
+    for i in range(len(nums)):
+        for j in range(len(nums)):
+            if i != j:
+                rest = []
+                for k in range(len(nums)):
+                    if k != i and k != j:
+                        rest.append(nums[k])
+
+                a = nums[i]
+                b = nums[j]
+
+                results = [
+                    a + b,
+                    a - b,
+                    b - a,
+                    a * b
+                ]
+
+                if b != 0:
+                    results.append(a / b)
+                if a != 0:
+                    results.append(b / a)
+
+                for r in results:
+                    if can_make_24(rest + [r]):
+                        return True
+    return False
+
+def new_numbers():
+    while True:
+        nums = [random.randint(1, 9) for _ in range(4)]
+        if can_make_24(nums):
+            return nums
+
+#เช็คว่าใช้เลขถูกต้อง
+def is_valid_input(user_input, numbers):
+    tokens = re.findall(r'\d+', user_input)
+    tokens = list(map(int, tokens))
+
+    if len(tokens) != 4:
+        return False
+
+    nums_copy = numbers.copy()
+    for t in tokens:
+        if t in nums_copy:
+            nums_copy.remove(t)
+        else:
+            return False
+
+    return True
+
 
 pygame.init()
 pygame.display.set_caption("GAME 24")
@@ -13,48 +70,43 @@ screen = pygame.display.set_mode((1200,1000))
 font = pygame.font.Font(None, 100)
 small_font = pygame.font.Font(None, 50)
 
-# ฟังก์ชันสุ่มเลข
-def new_numbers():
-    return [random.randint(1, 9) for _ in range(4)]
-
 numbers = new_numbers()
 user_input = ""
 result_text = ""
 
 score = 0
-time_limit = 120  # วินาที
+time_limit = 120
 start_time = pygame.time.get_ticks()
 
 running = True
 while running:
     screen.fill(WHITE)
 
-    #เวลา
+    # เวลา
     current_time = (pygame.time.get_ticks() - start_time) // 1000
     time_left = max(0, time_limit - current_time)
 
-    #หมดเวลา
     if time_left == 0:
         result_text = "Time Up!"
 
-    #แสดงเลข
+    # แสดงเลข
     for i, num in enumerate(numbers):
         text = font.render(str(num), True, RED)
         screen.blit(text, (100 + i*200, 200))
 
-    #input
+    # input
     input_surface = font.render(user_input, True, GREEN)
     screen.blit(input_surface, (100, 500))
 
-    #ผลลัพธ์
+    # ผลลัพธ์
     result_surface = small_font.render(result_text, True, BLACK)
     screen.blit(result_surface, (100, 650))
 
-    #คะแนน
+    # คะแนน
     score_surface = small_font.render(f"Score: {score}", True, BLACK)
     screen.blit(score_surface, (900, 50))
 
-    #เวลา
+    # เวลา
     time_surface = small_font.render(f"Time: {time_left}", True, BLACK)
     screen.blit(time_surface, (900, 120))
 
@@ -64,15 +116,18 @@ while running:
 
         if event.type == pygame.KEYDOWN and time_left > 0:
             if event.key == pygame.K_RETURN:
-                try:
-                    if eval(user_input) == 24:
-                        result_text = "Correct!"
-                        score += 100
-                    else:
-                        result_text = "Wrong!"
-                        score += -10
-                except:
-                    result_text = "Error!"
+                if is_valid_input(user_input, numbers):
+                    try:
+                        if abs(eval(user_input) - 24) < 0.001:
+                            result_text = "Correct!"
+                            score += 100
+                        else:
+                            result_text = "Wrong!"
+                            score -= 10
+                    except:
+                        result_text = "Error!"
+                else:
+                    result_text = "Use given numbers!"
 
                 numbers = new_numbers()
                 user_input = ""
@@ -81,7 +136,6 @@ while running:
                 user_input = user_input[:-1]
 
             elif event.key == pygame.K_r:
-                #รีเกมทั้งหมด
                 numbers = new_numbers()
                 user_input = ""
                 result_text = ""
