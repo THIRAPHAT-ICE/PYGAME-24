@@ -1,0 +1,96 @@
+import pygame
+import random
+
+pygame.init()
+pygame.display.set_caption("GAME 24")
+
+WHITE = (255,255,255)
+RED   = (255,0,0)
+GREEN = (0,200,0)
+BLACK = (0,0,0)
+
+screen = pygame.display.set_mode((1200,1000))
+font = pygame.font.Font(None, 100)
+small_font = pygame.font.Font(None, 50)
+
+# ฟังก์ชันสุ่มเลข
+def new_numbers():
+    return [random.randint(1, 9) for _ in range(4)]
+
+numbers = new_numbers()
+user_input = ""
+result_text = ""
+
+score = 0
+time_limit = 120  # วินาที
+start_time = pygame.time.get_ticks()
+
+running = True
+while running:
+    screen.fill(WHITE)
+
+    #เวลา
+    current_time = (pygame.time.get_ticks() - start_time) // 1000
+    time_left = max(0, time_limit - current_time)
+
+    #หมดเวลา
+    if time_left == 0:
+        result_text = "Time Up!"
+
+    #แสดงเลข
+    for i, num in enumerate(numbers):
+        text = font.render(str(num), True, RED)
+        screen.blit(text, (100 + i*200, 200))
+
+    #input
+    input_surface = font.render(user_input, True, GREEN)
+    screen.blit(input_surface, (100, 500))
+
+    #ผลลัพธ์
+    result_surface = small_font.render(result_text, True, BLACK)
+    screen.blit(result_surface, (100, 650))
+
+    #คะแนน
+    score_surface = small_font.render(f"Score: {score}", True, BLACK)
+    screen.blit(score_surface, (900, 50))
+
+    #เวลา
+    time_surface = small_font.render(f"Time: {time_left}", True, BLACK)
+    screen.blit(time_surface, (900, 120))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.KEYDOWN and time_left > 0:
+            if event.key == pygame.K_RETURN:
+                try:
+                    if eval(user_input) == 24:
+                        result_text = "Correct!"
+                        score += 100
+                    else:
+                        result_text = "Wrong!"
+                        score += -10
+                except:
+                    result_text = "Error!"
+
+                numbers = new_numbers()
+                user_input = ""
+
+            elif event.key == pygame.K_BACKSPACE:
+                user_input = user_input[:-1]
+
+            elif event.key == pygame.K_r:
+                #รีเกมทั้งหมด
+                numbers = new_numbers()
+                user_input = ""
+                result_text = ""
+                score = 0
+                start_time = pygame.time.get_ticks()
+
+            else:
+                user_input += event.unicode
+
+    pygame.display.update()
+
+pygame.quit()
